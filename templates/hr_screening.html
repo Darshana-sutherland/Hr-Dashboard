@@ -1,0 +1,187 @@
+{% extends 'hr_base.html' %}
+{% set title='Resume Screening' %}
+{% set active='screening' %}
+{% set header='Resume Screening' %}
+
+{% block body %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header">Screening Tool</div>
+      <div class="card-body">
+        <form id="screeningForm" method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="jobDescription" class="form-label">Job Description</label>
+            <textarea class="form-control" id="jobDescription" name="job_description" rows="8" placeholder="Paste the job description here..." required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="resumeFile" class="form-label">Upload Resume</label>
+            <input class="form-control" type="file" id="resumeFile" name="resume" accept=".pdf,.doc,.docx" required>
+            <div class="form-text">Accepted formats: PDF, DOC, DOCX</div>
+          </div>
+          <button type="submit" class="btn btn-primary">Screening</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header">Screening Results</div>
+      <div class="card-body">
+        <div id="screeningResults">
+          <div class="text-center text-muted py-5">
+            <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
+            <p class="mt-3">Submit a job description and resume to see screening results</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Recent Applications</span>
+    <a href="{{ url_for('hr_resumes') }}" class="btn btn-sm btn-outline-primary">View All</a>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Job</th>
+            <th>Status</th>
+            <th>Resume</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in applications %}
+          <tr>
+            <td>{{ a.candidate.name or a.candidate.username }}</td>
+            <td>{{ a.job.title }}</td>
+            <td>
+              <span class="badge bg-{{ 'success' if a.status == 'Hired' else 'warning' if a.status == 'Interview' else 'danger' if a.status == 'Rejected' else 'info' }}">
+                {{ a.status }}
+              </span>
+            </td>
+            <td>
+              {% if a.resume_filename %}
+                <a href="{{ url_for('download_resume', filename=a.resume_filename) }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-download"></i> Download
+                </a>
+              {% else %}
+                <span class="text-muted">N/A</span>
+              {% endif %}
+            </td>
+            <td>{{ a.created_at.strftime('%Y-%m-%d') }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-3">No applications found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  #screeningResults {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .match-score {
+    font-size: 2.5rem;
+    font-weight: bold;
+  }
+  .skill-match {
+    margin-top: 1rem;
+  }
+  .skill-item {
+    margin-bottom: 0.5rem;
+  }
+  .progress {
+    height: 8px;
+  }
+</style>
+
+<script>
+document.getElementById('screeningForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const resultsDiv = document.getElementById('screeningResults');
+  
+  // Show loading state
+  resultsDiv.innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Analyzing resume...</p>
+    </div>
+  `;
+  
+  // In a real implementation, you would send this to your backend for processing
+  // For now, we'll simulate a response after a short delay
+  setTimeout(() => {
+    // This is a mock response - replace with actual API call
+    const mockResponse = {
+      matchScore: 78,
+      skills: [
+        { name: 'Python', match: 90 },
+        { name: 'JavaScript', match: 85 },
+        { name: 'Project Management', match: 70 },
+        { name: 'Team Leadership', match: 65 },
+        { name: 'Data Analysis', match: 80 }
+      ]
+    };
+    
+    // Generate the results HTML
+    let skillsHtml = '';
+    mockResponse.skills.forEach(skill => {
+      skillsHtml += `
+        <div class="skill-item">
+          <div class="d-flex justify-content-between">
+            <span>${skill.name}</span>
+            <span>${skill.match}%</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: ${skill.match}%" 
+                 aria-valuenow="${skill.match}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+      `;
+    });
+    
+    resultsDiv.innerHTML = `
+      <div>
+        <div class="text-center mb-4">
+          <div class="match-score text-${mockResponse.matchScore > 70 ? 'success' : mockResponse.matchScore > 50 ? 'warning' : 'danger'}">
+            ${mockResponse.matchScore}%
+          </div>
+          <div>Overall Match Score</div>
+        </div>
+        
+        <h6 class="mt-4 mb-3">Skills Match</h6>
+        <div class="skill-match">
+          ${skillsHtml}
+        </div>
+        
+        <div class="mt-4">
+          <button class="btn btn-sm btn-outline-primary">View Detailed Report</button>
+          <button class="btn btn-sm btn-outline-secondary ms-2">Schedule Interview</button>
+        </div>
+      </div>
+    `;
+  }, 2000);
+});
+</script>
+{% endblock %}
+
+

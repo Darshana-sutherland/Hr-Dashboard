@@ -1,0 +1,122 @@
+{% extends 'hr_base.html' %}
+{% set title='Dashboard' %}
+{% set active='dashboard' %}
+{% set header='Dashboard Overview' %}
+{% block body %}
+      <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Total Candidates</div><div class="display-6">{{ total_candidates }}</div></div></div></div>
+        <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Open Positions</div><div class="display-6">{{ open_positions }}</div></div></div></div>
+        <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">In Interview</div><div class="display-6">{{ in_interview }}</div></div></div></div>
+        <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Hired</div><div class="display-6">{{ hired }}</div></div></div></div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header">Applications by Status</div>
+            <div class="card-body">
+              <div class="chart-container" style="position: relative; height:250px; margin-bottom: 1rem;">
+                <canvas id="statusChart"></canvas>
+              </div>
+              <ul class="list-group mt-3">
+                {% for k, v in status_counts.items() %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  {{ k }} <span class="badge bg-primary rounded-pill">{{ v }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const ctx = document.getElementById('statusChart').getContext('2d');
+              const statusData = {
+                labels: {{ status_counts.keys()|list|tojson|safe }},
+                datasets: [{
+                  data: {{ status_counts.values()|list|tojson|safe }},
+                  backgroundColor: [
+                    '#4e73df',
+                    '#1cc88a',
+                    '#e74a3b',
+                    '#f6c23e',
+                    '#36b9cc',
+                    '#858796',
+                    '#5a5c69'
+                  ],
+                  hoverBackgroundColor: [
+                    '#2e59d9',
+                    '#17a673',
+                    '#be2617',
+                    '#dda20a',
+                    '#2c9faf',
+                    '#6c757d',
+                    '#4d4f52'
+                  ],
+                  hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }]
+              };
+              
+              new Chart(ctx, {
+                type: 'doughnut',
+                data: statusData,
+                options: {
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: 'bottom',
+                      labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 8
+                      }
+                    },
+                    tooltip: {
+                      backgroundColor: "rgb(255,255,255)",
+                      bodyColor: "#858796",
+                      borderColor: '#dddfeb',
+                      borderWidth: 1,
+                      xPadding: 15,
+                      yPadding: 15,
+                      displayColors: false,
+                      caretPadding: 10,
+                      callbacks: {
+                        label: function(context) {
+                          const label = context.label || '';
+                          const value = context.raw || 0;
+                          const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                          const percentage = Math.round((value / total) * 100);
+                          return `${label}: ${value} (${percentage}%)`;
+                        }
+                      }
+                    }
+                  },
+                  cutout: '70%',
+                }
+              });
+            });
+          </script>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">Recent Applications <a href="{{ url_for('hr_resumes') }}" class="small">View All</a></div>
+            <div class="card-body">
+              {% for a in recent %}
+              <div class="d-flex justify-content-between border-bottom py-2">
+                <div>
+                  <div class="fw-semibold">{{ a.candidate.name or a.candidate.username }}</div>
+                  <div class="text-muted small">{{ a.job.title }}</div>
+                </div>
+                <span class="badge bg-secondary">{{ a.status }}</span>
+              </div>
+              {% else %}
+              <div class="text-muted">No applications yet.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+{% endblock %}
+
+

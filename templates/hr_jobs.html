@@ -1,0 +1,29 @@
+{% extends 'hr_base.html' %}
+{% set title='Jobs' %}
+{% set active='jobs' %}
+{% set header='Jobs' %}
+{% block body %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead><tr><th>Title</th><th>Company</th><th>Tags</th><th>Open Apps</th></tr></thead>
+        <tbody>
+          {% for j in jobs %}
+          <tr>
+            <td>{{ j.title }}</td>
+            <td>{{ j.company }}</td>
+            <td>{{ j.tags }}</td>
+            <td>{{ j.applications|length }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-muted">No jobs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

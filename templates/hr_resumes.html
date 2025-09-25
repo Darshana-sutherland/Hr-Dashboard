@@ -1,0 +1,30 @@
+{% extends 'hr_base.html' %}
+{% set title='Resume Database' %}
+{% set active='database' %}
+{% set header='Resume Database' %}
+{% block body %}
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead><tr><th>Candidate</th><th>Job</th><th>Status</th><th>Date</th><th>Resume</th></tr></thead>
+          <tbody>
+            {% for a in applications %}
+            <tr>
+              <td>{{ a.candidate.name or a.candidate.username }}<div class="small text-muted">{{ a.candidate.email }}</div></td>
+              <td>{{ a.job.title }}</td>
+              <td><span class="badge bg-secondary">{{ a.status }}</span></td>
+              <td>{{ a.created_at.strftime('%Y-%m-%d') }}</td>
+              <td>
+                {% if a.resume_filename %}
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('download_resume', filename=a.resume_filename) }}">Download</a>
+                {% else %}<span class="text-muted">N/A</span>{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted">No applications yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+{% endblock %}
+
+

@@ -1,0 +1,41 @@
+{% extends 'hr_base.html' %}
+{% set title='Candidates' %}
+{% set active='candidates' %}
+{% set header='Candidates' %}
+{% block body %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead><tr><th>Candidate</th><th>Position</th><th>Status</th><th>Applied</th><th>Resume</th><th>Update</th></tr></thead>
+        <tbody>
+          {% for a in applications %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ a.candidate.name or a.candidate.username }}</div>
+            </td>
+            <td>{{ a.job.title }}</td>
+            <td><span class="badge text-bg-secondary">{{ a.status }}</span></td>
+            <td class="text-muted small">{{ a.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>{% if a.resume_filename %}<a href="{{ url_for('download_resume', filename=a.resume_filename) }}">Download</a>{% else %}N/A{% endif %}</td>
+            <td>
+              <form method="post" action="{{ url_for('hr_update_status', app_id=a.id) }}">
+                <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
+                  {% for s in status_options %}
+                  <option value="{{ s }}" {% if s==a.status %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-muted">No applications yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+{% endblock %}
+
+
