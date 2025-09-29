@@ -10,11 +10,14 @@
     <nav class="navbar navbar-light bg-white border-bottom">
       <div class="container-fluid">
         <a class="navbar-brand" href="{{ url_for('index') }}">Recruitment Portal</a>
-        {% if session.get('candidate_id') %}
+        <!-- {% if session.get('candidate_id') %}
           <a class="btn btn-outline-danger" href="{{ url_for('logout') }}">Logout</a>
         {% else %}
           <a class="btn btn-outline-secondary" href="{{ url_for('login_candidate') }}">Candidate Login</a>
-        {% endif %}
+        {% endif %} -->
+        <div class="mt-auto">
+          <a class="btn btn-outline-danger w-100" href="{{ url_for('logout') }}">Logout</a>
+        </div>
       </div>
     </nav>
     <div class="container py-4">

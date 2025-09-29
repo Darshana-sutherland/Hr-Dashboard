@@ -14,8 +14,10 @@
               <td><span class="badge bg-secondary">{{ a.status }}</span></td>
               <td>{{ a.created_at.strftime('%Y-%m-%d') }}</td>
               <td>
-                {% if a.resume_filename %}
-                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('download_resume', filename=a.resume_filename) }}">Download</a>
+                {% if a.resume_file_id %}
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('download_file', file_id=a.resume_file_id) }}">
+                    Download
+                </a>
                 {% else %}<span class="text-muted">N/A</span>{% endif %}
               </td>
             </tr>

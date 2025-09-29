@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, flash
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -202,21 +202,37 @@ def hr_screening():
         return guard
         
     if request.method == 'POST':
+        # Handle AJAX submission: job_description + resume PDF
         job_description = request.form.get('job_description', '')
         resume_file = request.files.get('resume')
-        
-        if not job_description or not resume_file:
-            flash('Please provide both job description and resume', 'error')
+
+        if not job_description or not resume_file or not resume_file.filename:
+            # For AJAX use JSON error; for non-AJAX, flash
+            if request.accept_mimetypes.best == 'application/json':
+                return jsonify({"error": "Please provide both job description and resume PDF."}), 400
+            flash('Please provide both job description and resume', 'danger')
             return redirect(url_for('hr_screening'))
-            
-        # In a real implementation, you would process the resume and job description here
-        # For now, we'll just save the uploaded file and show a success message
-        if resume_file:
-            filename = secure_filename(resume_file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            resume_file.save(filepath)
-            flash('Resume uploaded successfully!', 'success')
-    
+
+        # Only allow PDF for now
+        if not resume_file.filename.lower().endswith('.pdf'):
+            if request.accept_mimetypes.best == 'application/json':
+                return jsonify({"error": "Only PDF resumes are supported at the moment."}), 400
+            flash('Only PDF resumes are supported at the moment.', 'danger')
+            return redirect(url_for('hr_screening'))
+
+        filename = secure_filename(resume_file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        resume_file.save(filepath)
+
+        # Run ATS processing
+        try:
+            from pathlib import Path
+            from ats_service import process_ats
+            result = process_ats(job_description, Path(filepath))
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     # Get recent applications for the table
     apps = Application.query.order_by(Application.created_at.desc()).limit(10).all()
     return render_template('hr_screening.html', applications=apps)
@@ -302,7 +318,7 @@ def apply(job_id: int):
         app_row = Application(candidate_id=user.id, job_id=job.id, status='New', resume_filename=filename)
         db.session.add(app_row)
         db.session.commit()
-        flash('Application submitted successfully.', 'success')
+        # flash('Application submitted successfully.', 'success')
         return redirect(url_for('index'))
 
     return render_template('apply.html', job=job)
